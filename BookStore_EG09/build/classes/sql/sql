@@ -1,0 +1,27 @@
+String sql = "INSERT INTO bs_user (username,PASSWORD,email) VALUES ('benbne','123456','ben@163.com')";
+
+String sql = "SELECT id,username,PASSWORD,email FROM bs_user WHERE username=? AND PASSWORD=?";
+
+
+
+CREATE TABLE `bs_book` (
+  `book_id` int(11) NOT NULL AUTO_INCREMENT,
+  `book_name` varchar(100) DEFAULT NULL,
+  `author` varchar(100) DEFAULT NULL,
+  `price` double DEFAULT NULL,
+  `store_num` int(11) DEFAULT NULL,
+  `salse_amount` int(11) DEFAULT NULL,
+  `img_path` char(200) DEFAULT NULL,
+  PRIMARY KEY (`book_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=gb2312
+
+
+SELECT `book_id` bookId,`book_name` bookName,`author` author,`price` price,`store_num` storeNum,`salse_amount` salseAmount,`img_path` imgPath
+FROM bs_book;
+
+INSERT INTO `bs_book` (`book_name`,`author`,`price`,`store_num`,`salse_amount`,`img_path`) VALUES ("book02","authoor2",'200.3','250','300','static/img/default.jpg')
+
+UPDATE `bs_book` SET `book_name`=?,`author`=?,`price`=?,`store_num`=?,`salse_amount`=?,`img_path`=? WHERE `book_id` = ?;
+
+
+
