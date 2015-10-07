@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.whh.ssm.respositories.EmployeeMapper">
+	<insert id="saveOrUpdate" parameterType="com.whh.ssm.entities.Employee">
+		<if test="id != null">
+			update ssh_employee
+			set last_name = #{lastName},email = #{email},birth = #{birth},
+			create_time = #{createTime},department_id = #{department.id}
+			
+			where id = #{id}
+		</if>
+		<if test="id == null">
+			insert into ssh_employee(last_name,email,birth,create_time,department_id) 
+			values (#{lastName},#{email},#{birth},#{createTime},#{department.id})
+			
+		</if>
+	</insert>
+
+</mapper>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!-- 配置 mybatis 运行时的配置 -->
+	<settings>
+		<!-- 自动映射列的名字和持久化类的属性名 -->
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+		<!--懒加载相关  -->
+		<setting name="lazyLoadingEnabled" value="true"/>
+		<setting name="aggressiveLazyLoading" value="false"/>
+		<!-- 设置是否启用二级缓存 -->
+		<setting name="cacheEnabled" value="true"/>
+	</settings>
+
+
+</configuration>
