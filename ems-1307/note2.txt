@@ -1,0 +1,228 @@
+1. 实现通用的带查询条件的分页 ?
+
+1). 页面上的表单字段: 
+①. 传统的定义方式: <input type="text" name="age"/>. 若这样定义, 则只能得到某一个字段的值, 例如: 得到 age=12. 而不知道具体的比较方式, 和
+目标字段的类型. 
+②. 查询表单的字段必须包含更多的信息: 字段的名字*, 具体的比较方式?, 字段的类型?, 字段的值* .
+如何做到呢 ? 
+	> 加入隐藏域: 可以做到, 但比较麻烦. 需要为每一个待比较的字段加入两个辅助字段, 获取的时候, 需要获取 3 个字段, 并解析. 
+	> 使用一个表单字段, 可以包含 4 个信息. 提交之后, Action 中可以得到的仅是 name 和 value 值. 而 value 是用户填入的, 所以更多的信息, 需要
+	使用 name 来携带. 例如: <input type="text" name="GTI_age" />, <input type="text" name="LIKES_loginName" />
+		* name 中其实包含了 3 部分信息: 
+			_ 之前的字符串的倒数一个字符之前的字符串(例如: GT, LIKE) 代表比较方式. 
+			_ 之前的字符串的最后一个字符(例如: S, I) 代表字段的类型.
+			_ 之后的字符串(age, loginName) 代表字段的名称
+		* value 即为 value. 
+
+2). 在 Action 中如何获取到这些请求参数呢 ? request.getParameterNames() 先获取到所有的请求参数的名字, 再从请求参数的名字中过滤哪些是
+进行条件查询的字段. 而过滤的条件并不是非常的有特点(name 中包含 _). 为了使其能够有更加显著的特点, 那就在每个 name 前再添加一个标记吧. 即所有
+的请求参数以特定的字符串开头. 例如: <input type="text" name="filter_GTI_age" />, <input type="text" name="filter_LIKES_loginName" /> 		
+如此, 在 Action 中获取请求参数的名字后, 需要去除前缀 filter_, 后面再进行解析
+如此, 在 Action 就可以得到一个 Map<String, Object>, 类似于如下方式. 键: GTI_age, 值: 12; 键: LIKES_loginName, 值: aa
+		
+3). 定义一个封装了查询信息的类: PropertyFilter. 其中包含:
+
+class PropertyFilter{
+	//比较方式
+	enum MatchType{
+		EQ, GT, LT, GE, LE, LIKE, ISNOTNULL, ISNULL;
+	}
+	
+	//字段的类型
+	enum PropertyType{
+		S(String.class), I(Integer.class), F(Float.class), D(Date.class);
+	
+		private Class<?> clazz;
+		
+		public Class<?> getClass(){
+			return clazz;
+		}
+	}
+	
+	private String propertyName;
+	private enum matchType;
+	private enum propertyType;
+	private Object propertyValue;
+	
+	//把传入的 Paramter 的 Map 转为 PropertyFilter 的集合. 
+	public static List<PropertyFilter> parseParamsToFilters(Map<String, Object> params){
+	
+	}
+}
+
+4). 在 Action 可以调用 Service 的 Page getPage(Page page, Map<String, Object> params);
+
+5). 在 Service 的 Page getPage(Page page, Map<String, Object> params) 方法中:
+//把 params 转为 PropertyFilter 的集合
+List<PropertyFilter> filters = 	PropertyFilter.parseParamsToFilters(params);	
+//调用 Dao 方法
+Page page = dao.getPage(page, filters);
+
+6). 在 Dao 的 getPage(page, filters) 方法中:
+//把 PropertyFilter 的集合解析为 Criteron 的集合. 
+
+//创建 Criteria, 添加 Criterion 的集合, 计算总的记录数和当前页面的 List
+
+		
+------------------------------------------------------------
+
+1. 如何利用 Struts2 返回一组 JSON 数据
+1). 做 Struts2 Ajax 时, 利用 Stream 结果类型返回过一个字节标记.
+2). 利用 Struts2 返回 JSON, 需要借助于 Struts2 的 JSON 插件.
+①. 具体参看 struts-2.3.15.3\docs\WW\docs\json-plugin.html
+②. 加入 struts2-json-plugin-2.3.15.3.jar
+③. 使我们继承的 package 使用 json-default
+④. 返回值类型可以使用 json 类型. 
+
+2. 返回什么样的 JSON 数据, easy ui 才可以顺利的进行解析, 进而生存动态的 easy ui tree
+
+
+----------------------------------------------------------------
+
+1. 权限模块数据表的设计
+1). 保存受保护 URL 的数据表: resource
+
+ID   METHOD   URL
+主键   请求方式      被保护的 URL
+1    GET      /user-list.action
+
+2). 权限表: authority
+
+①. 表的设计
+
+ID   NAME                 DISPLAY_NAME       PARENT_ID  RELATED_AUTHORITIES           MAIN_RESOUCE
+主键   权限的名字(给框架使用的)  用于显示的权限的名字     父权限的 ID  关联的权限的 id 字符串, 使用 , 分割   若前权限是需要导航的, 则为关联 resouce 的 id
+2    ROLE_LIST            员工查询                         1          null                          1
+
+②. 和 resource 数据表的关系: 多对多的关联关系. 是从 resouce 到 authority 的单向 n-n 的关联关系.
+
+3). 角色表: role
+
+①. 表的设计:
+ID    DISPLAY_NAME
+主键     角色的名字
+1     员工管理
+
+②. 和 authority 的关系: 多对多的关联关系. 
+
+4). 用户表: user
+和 role 的关系: 多对多的关联关系. 
+
+
+------------------------------------------------------------------
+
+1. 新建角色时, 权限的级联选择:
+
+1). Role 和 Authority 的对应关系: 单向 n-n 的关联关系. 一个角色可以有多个权限, 反过来, 一个权限也可以属于
+多个角色
+
+2). Authority 和 Authority 的关联关系:
+①. 双向 1-n 的关联关系: 一个父权限有多个子权限. 反过来, 一个子权限只能有一个父权限. 
+②. 实际上有一个 n-n 的关联关系: 一个权限可能会有多个关联的权限, 反过来一个权限也可能被多个权限关联. 但并没有建立这样的关系, 而是使用了 
+relatedAuthorites 的一个字段来描述他们的关系
+
+2. BaseDao 中定义了两个方法
+public List<T> getByIsNotNull(String propertyName)
+public List<T> getByIsNull(String propertyName)
+
+3. 页面上定制化显示所有的 checkbox:
+<p style="display:none" class="authority_8">    
+	<label>&nbsp;</label>    
+    <input type="checkbox" name="authorities2" value="1" id="employeeForm_authorities2" class="" style="border:none"/>员工添加
+</p>
+
+1). 修改了 checkboxlist.ftl 文件. 
+2). 实现选取父权限时, 显示所有的子权限: 在子权限的 p 节点上添加了 class 属性, 该属性值为: authority_parentAuthorityId
+<p style="display:none" class="authority_8"> 
+3). 权限的级联选取和级联取消
+①. 需要依赖 relatedAuthorites 属性.
+②. 使用了 listCssClass 属性
+③. JS 中的基本思路:
+	> 级联选择的基本思路: 选取当期 checkbox 时, 获取 class 属性, 得到 relatedAuthorites 字符串(可能为:,2,3,4,), 解析该字符串, 得到具体
+	关联的权限的 id, 把 value 值等于 id 的那些个 checkbox 也选择上.  
+	> 级联取消的基本思路: 取消选取 checkbox 时, 获取当前的 value 属性, 检查哪些 checkbox 的 class 属性中包含 ,value, 字符串, 把他们取消
+
+--------------------------------------------------
+
+1. 通用的分页
+1). 创建一个封装分页信息的 Page 类. 注意: 需要对 pageNo 进行校验. 
+2). 通用分页方法的编写. 
+①. 查询总的记录数. 注意: 使用 Criteria 的 setProjection 方法
+②. 查询当前页面的 content.
+3). 使用了 OpenSessionInViewFilter. 
+
+2. 员工信息的修改:
+1). 和添加使用的是一个 input.
+①. Ajax 检验 loginName 的逻辑需要重写.
+②. 创建人需要重写编写.
+③. 表单回显的原理.
+2). 完成修改
+①. modelDriven 和 preparable 拦截器的使用
+②. 在 prepareSave 方法中, 需要 setDepartment 为 null. 否则会出现修改 id 的问题
+③. 修改了 setRoles2 方法. 在方法前 clear 了 roles
+
+3. 删除: Ajax 操作. 熟练使用 jQuery
+
+4. POI. 看文档. 
+
+----------------------------------------------------
+
+7. 员工的录入操作
+1). 显示录入的表单
+①. 部门和角色来自于数据库.
+②. 部门和角色需要使用 hibernate 的二级缓存
+
+2). Employee 和其他实体类的关联关系
+①. Employee 和 Department 之间是双向 n-1 的关联关系: 一个员工只能在一个部门, 一个部门中可以有多个员工
+②. Employee 和 Employee 之间有一个单向 n-1 的关联关系: 一个员工由另外一个员工创建和添加. 一个员工可以添加多个员工
+③. Employee 和 Role 之间是单向 n-n 的关联关系: 一个员工可以有多个角色, 返回来一个角色也可以分配给多个员工.
+④. Department 和 Employee 之间有一个单向 n-1 的关联关系: 一个部门可以有一个 manager(实际是一个 Employee)
+
+
+6. 使用 jQurey 的 easyui 组件中的 tree 作为导航菜单.
+
+5. 服务端的复杂验证: 需要借助于 Service 层甚至数据库才能完成的验证. 例如: 验证用户名是否可用.
+1). 在 Action 的目标方法中完成
+①. 验证 loginName 和 password 是否匹配. 
+②. enabled 字段是否标记可用
+③. 若验证通过, 则 visited_times + 1
+
+2). 在页面上显示错误消息. 
+
+4. 服务端的简单验证: 不需要借助于 Service 层完成的验证.
+1). 使用 Struts2 的 validation 验证框架
+2). 在页面上显示错误消息
+
+3. js 和 jQuery 手工的前端验证.
+
+2. 新建 index.jsp 页面
+
+1. 搭建 SSH 的开发环境
+1). 加入 Spring
+①. 加入 jar 包
+②. 在 web.xml 文件中配置启动 IOC 容器的 Listener.
+③. 加入 Spring 的配置文件
+④. 编辑 Spring 的配置文件:
+
+2). 加入 Hibernate
+①. 加入 jar 包.
+②. 加入 hibernate.cfg.xml 文件. 并编辑它. 
+	> 配置二级缓存
+	
+③. Spring 整合 Hibernate
+	> 配置 C3P0 数据源: 加入 mysql 的驱动和 C3P0 的 jar 包
+	> 配置 SessionFactory
+	> 配置 TransactionManager
+	> 配置开启基于注解的事务支持
+	
+3). 加入 Struts2
+①. 加入 jar 包.
+②. 在 web.xml 文件中配置 Struts2 的 Filter
+③. 加入 Struts2 的配置文件
+④. Spring 整合 Struts2
+	> 加入 Spring Struts 的插件包
+	> 在 IOC 容器中配置 Struts2 的 Action. 注意: Action 需要时 prototype 作用域
+	> 在 Struts2 的配置文件中配置 action 时, class 属性指向 Spring IOC 容器中对应 Action bean 的 id,
+	而不是再配置全类名
+	
+		

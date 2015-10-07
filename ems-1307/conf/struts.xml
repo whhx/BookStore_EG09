@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+
+    <constant name="struts.enable.DynamicMethodInvocation" value="false" />
+    <constant name="struts.devMode" value="true" />
+    
+    
+    
+    <!--读取国际资源文件  -->
+    <constant name="struts.custom.i18n.resources" value="i18n"></constant>
+    
+    <!--修改主题  -->
+	<constant name="struts.ui.theme" value="simple"></constant>
+
+    <package name="default" namespace="/" extends="json-default">
+    
+    	<interceptors>
+    		<interceptor name="fileCleaner" class="com.atguigu.ems.web.interceptors.FileCleanerInterceptor"></interceptor>
+    		
+    		<interceptor-stack name="whh">
+    			<interceptor-ref name="fileCleaner"></interceptor-ref>
+    			<interceptor-ref name="paramsPrepareParamsStack">
+    				<param name="prepare.alwaysInvokePrepare">false</param>
+    			</interceptor-ref>
+    		</interceptor-stack>
+    	</interceptors>
+    	
+		<default-interceptor-ref name="whh"></default-interceptor-ref>
+	
+	
+		<action name="login-success">
+			<result>/WEB-INF/views/login-success.jsp</result>
+		</action>
+	
+		<action name="emp_upload">
+			<result>/WEB-INF/views/emp/upload.jsp</result>
+		</action>
+		
+		<action name="emp_uploadTemplateDownload">
+			<!--下载已经存在的文件 -->
+			<result type="redirect">/files/employee.xls</result>
+		</action>
+		
+		<action name="role-*"
+			class="roleAction"
+			method="{1}">
+			
+			<result name="list">/WEB-INF/views/role/list.jsp</result>
+			<result name="input">/WEB-INF/views/role/input.jsp</result>
+			<!-- <result name="input">/index.jsp</result> -->
+			
+			<!--配置Ajax 验证  -->
+			<result type="stream" name="ajax-success">
+				<param name="contentType">text/html</param>
+				<param name="inputName">inputStream</param>
+			</result>
+			
+		</action>
+	
+	
+		<action name="emp-*"
+			class="employeeAction"
+			method="{1}">
+			
+			<!--设置拦截器的参数. 该设置只适用于当前的 Action  -->
+			<interceptor-ref name="whh">
+				<param name="fileUpload.allowedTypes">application/vnd.ms-excel</param>
+				<param name="fileUpload.allowedExtensions">xls</param>
+			</interceptor-ref>
+			
+			<!--映射异常信息  -->
+			<exception-mapping result="input" exception="com.atguigu.ems.web.exceptions.AccountException"></exception-mapping>
+			<exception-mapping result="input" exception="com.atguigu.ems.web.exceptions.AccountLockedException"></exception-mapping>
+			
+			<!--返回json数据  -->
+			<result name="json-success" type="json">
+				<param name="root">navigations</param>
+			</result>
+			
+			<!--条件弹出  -->
+			<result name="criteria-input">/WEB-INF/views/emp/criteria-input.jsp</result>
+			
+			<!--上传出错的页面  -->
+			<result name="upload-input">/WEB-INF/views/emp/upload.jsp</result>
+			
+			<result name="emp-list">/WEB-INF/views/emp/list.jsp</result>
+			<!-- 定义下载的结果 -->
+			<result type="stream" name="download-success"/>
+			
+			<!--配置Ajax 验证  -->
+			<result type="stream" name="ajax-success">
+				<param name="contentType">text/html</param>
+				<param name="inputName">inputStream</param>
+			</result>
+			
+			<!--配置登陆成功页面  -->
+			<result name="login-sccess">/WEB-INF/views/login-success.jsp</result>
+			<!-- 配置员工录入的表单页面 -->
+			<result name="emp-input">/WEB-INF/views/emp/emp-input.jsp</result>
+			<result name="input">/index.jsp</result>
+				
+		</action>
+        
+    </package>
+
+</struts>
